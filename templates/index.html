@@ -34,7 +34,7 @@
                 </div>
 
                 <div class="col-lg-5">
-                    <form class="search-card" method="get" action="/">
+                    <form class="search-card" method="get" action="/" onsubmit="handleFormSubmit(event)">
                         <label for="city" class="form-label">Location</label>
                         <input type="text" id="city" name="city" class="form-control form-control-lg"
                                placeholder="Baku, London, Paris..." value="{{ city }}">
@@ -43,8 +43,8 @@
                         <input type="date" id="date" name="date" class="form-control form-control-lg"
                                value="{{ selected_date }}">
 
-                        <input type="hidden" id="lat" name="lat">
-                        <input type="hidden" id="lon" name="lon">
+                        <input type="hidden" id="lat" name="lat" value="{{ lat }}">
+                        <input type="hidden" id="lon" name="lon" value="{{ lon }}">
 
                         <button class="btn btn-main w-100 mt-4" type="submit">Show Weather</button>
 
@@ -56,110 +56,130 @@
             </div>
         </section>
 
-        {% if error %}
-            <div class="alert alert-warning mt-4">{{ error }}</div>
-        {% endif %}
+        <!-- Loading Spinner Container -->
+        <div id="loading-spinner" class="text-center py-5" style="display: none;">
+            <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-light mt-3 font-monospace">Fetching weather data...</p>
+        </div>
 
-        {% if location and weather %}
-            <section class="weather-panel mt-4">
-                <div class="row g-4">
-                    <div class="col-lg-5">
-                        <p class="small-title dark">
-                            {% if source == "history" %}
-                                previous weather
-                            {% else %}
-                                forecast
-                            {% endif %}
-                        </p>
+        <!-- Error Alert Container -->
+        <div id="error-alert" class="alert alert-warning mt-4" style="display: none;"></div>
 
-                        <h2>
-                            {{ location.name }}
-                            {% if location.country %}
-                                , {{ location.country }}
-                            {% endif %}
-                        </h2>
+        <!-- Weather Panel (dynamic populated by JS) -->
+        <section id="weather-panel" class="weather-panel mt-4" style="display: none;">
+            <div class="row g-4">
+                <div class="col-lg-5">
+                    <p id="weather-source-title" class="small-title dark"></p>
+                    <h2 id="location-name"></h2>
+                    <p id="date-text" class="date-text"></p>
 
-                        <p class="date-text">
-                            {{ weather.date }}
-                            {% if cache_used %}
-                                · loaded from cache
-                            {% endif %}
-                        </p>
-
-                        <div class="temp-row">
-                            <span class="main-temp">{{ weather.temp_max }}</span>
-                            <span class="temp-unit">°C</span>
-                        </div>
-
-                        <h3>{{ weather.description }}</h3>
-                        <p class="soft-text">
-                            low {{ weather.temp_min }}°C · feels like {{ weather.feels_max }}°C / {{ weather.feels_min }}°C
-                        </p>
+                    <div class="temp-row">
+                        <span id="main-temp" class="main-temp"></span>
+                        <span class="temp-unit">°C</span>
                     </div>
 
-                    <div class="col-lg-7">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="weather-box">
-                                    <span>Precipitation</span>
-                                    <strong>{{ weather.precipitation }} mm</strong>
-                                </div>
-                            </div>
+                    <h3 id="weather-description"></h3>
+                    <p id="temp-range-text" class="soft-text"></p>
+                </div>
 
-                            <div class="col-md-6">
-                                <div class="weather-box">
-                                    <span>Wind</span>
-                                    <strong>{{ weather.wind }} km/h</strong>
-                                </div>
+                <div class="col-lg-7">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="weather-box">
+                                <span>Precipitation</span>
+                                <strong id="weather-precipitation"></strong>
                             </div>
+                        </div>
 
-                            <div class="col-md-6">
-                                <div class="weather-box">
-                                    <span>Rain</span>
-                                    <strong>{{ weather.rain }} mm</strong>
-                                </div>
+                        <div class="col-md-6">
+                            <div class="weather-box">
+                                <span>Wind</span>
+                                <strong id="weather-wind"></strong>
                             </div>
+                        </div>
 
-                            <div class="col-md-6">
-                                <div class="weather-box">
-                                    <span>Snowfall</span>
-                                    <strong>{{ weather.snowfall }} cm</strong>
-                                </div>
+                        <div class="col-md-6">
+                            <div class="weather-box">
+                                <span>Rain</span>
+                                <strong id="weather-rain"></strong>
                             </div>
+                        </div>
 
-                            <div class="col-md-6">
-                                <div class="weather-box">
-                                    <span>Sunrise</span>
-                                    <strong>{{ weather.sunrise }}</strong>
-                                </div>
+                        <div class="col-md-6">
+                            <div class="weather-box">
+                                <span>Snowfall</span>
+                                <strong id="weather-snowfall"></strong>
                             </div>
+                        </div>
 
-                            <div class="col-md-6">
-                                <div class="weather-box">
-                                    <span>Sunset</span>
-                                    <strong>{{ weather.sunset }}</strong>
-                                </div>
+                        <div class="col-md-6">
+                            <div class="weather-box">
+                                <span>Sunrise</span>
+                                <strong id="weather-sunrise"></strong>
                             </div>
+                        </div>
 
-                            {% if current %}
-                                <div class="col-12">
-                                    <div class="today-line">
-                                        now: {{ current.temperature_2m }}°C,
-                                        humidity {{ current.relative_humidity_2m }}%,
-                                        wind {{ current.wind_speed_10m }} km/h,
-                                        clouds {{ current.cloud_cover }}%
-                                    </div>
-                                </div>
-                            {% endif %}
+                        <div class="col-md-6">
+                            <div class="weather-box">
+                                <span>Sunset</span>
+                                <strong id="weather-sunset"></strong>
+                            </div>
+                        </div>
+
+                        <div id="current-details-box" class="col-12" style="display: none;">
+                            <div id="current-details-line" class="today-line"></div>
                         </div>
                     </div>
                 </div>
-            </section>
-        {% endif %}
+            </div>
+        </section>
     </main>
 </div>
 
 <script>
+const WEATHER_CODES = {
+    0: "Clear sky",
+    1: "Mainly clear",
+    2: "Partly cloudy",
+    3: "Cloudy",
+    45: "Fog",
+    48: "Frost fog",
+    51: "Light drizzle",
+    53: "Drizzle",
+    55: "Heavy drizzle",
+    61: "Light rain",
+    63: "Rain",
+    65: "Heavy rain",
+    71: "Light snow",
+    73: "Snow",
+    75: "Heavy snow",
+    80: "Light showers",
+    81: "Rain showers",
+    82: "Heavy showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm with hail",
+    99: "Heavy thunderstorm with hail",
+};
+
+const CACHE_SECONDS = 300; // 5 minutes cache
+
+// -------------------------------------------------------------
+// Form & Geolocation Actions
+// -------------------------------------------------------------
+function handleFormSubmit(event) {
+    // If city text was edited after using location, clear lat/lon hidden values
+    const cityInput = document.getElementById("city").value.trim();
+    const latInput = document.getElementById("lat");
+    const lonInput = document.getElementById("lon");
+
+    if (cityInput !== "" && cityInput !== "Current Location") {
+        latInput.value = "";
+        lonInput.value = "";
+    }
+}
+
 function useCurrentLocation() {
     if (!navigator.geolocation) {
         alert("Your browser does not support location access.");
@@ -168,15 +188,223 @@ function useCurrentLocation() {
 
     navigator.geolocation.getCurrentPosition(
         function(position) {
-            document.getElementById("lat").value = position.coords.latitude;
-            document.getElementById("lon").value = position.coords.longitude;
-            document.querySelector("form").submit();
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            // Set input values and submit
+            document.getElementById("lat").value = lat;
+            document.getElementById("lon").value = lon;
+            document.getElementById("city").value = "Current Location";
+            
+            // Redirect to URL with query parameters so the result is shareable
+            const date = document.getElementById("date").value;
+            window.location.search = `?lat=${lat}&lon=${lon}&city=Current%20Location&date=${date}`;
         },
         function() {
             alert("Location access was not allowed.");
         }
     );
 }
+
+// -------------------------------------------------------------
+// Client-Side Fetch, Caching and Rendering
+// -------------------------------------------------------------
+async function fetchWeatherData(city, lat, lon, dateVal) {
+    const spinner = document.getElementById("loading-spinner");
+    const errorAlert = document.getElementById("error-alert");
+    const panel = document.getElementById("weather-panel");
+
+    // Reset visibility
+    spinner.style.display = "block";
+    errorAlert.style.display = "none";
+    panel.style.display = "none";
+
+    try {
+        const cacheKey = `weather_${city || ""}_${lat || ""}_${lon || ""}_${dateVal}`;
+        const cached = getSessionCache(cacheKey);
+
+        if (cached) {
+            console.log("Serving from local browser cache:", cacheKey);
+            renderWeather(cached.location, cached.weatherData, cached.weatherType, true);
+            return;
+        }
+
+        let location = null;
+
+        // 1. Geocode if coordinates are not provided directly
+        if (lat && lon) {
+            location = {
+                name: "Current Location",
+                country: "",
+                latitude: parseFloat(lat),
+                longitude: parseFloat(lon)
+            };
+        } else {
+            const cityName = city || "Baku";
+            const geocodeUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=en&format=json`;
+            
+            const geoRes = await fetch(geocodeUrl);
+            if (!geoRes.ok) throw new Error(`Geocoding server responded with status: ${geoRes.status}`);
+            
+            const geoData = await geoRes.json();
+            if (!geoData.results || geoData.results.length === 0) {
+                throw new Error(`Could not find weather data for '${cityName}'.`);
+            }
+
+            const place = geoData.results[0];
+            location = {
+                name: place.name || cityName,
+                country: place.country || "",
+                latitude: place.latitude,
+                longitude: place.longitude
+            };
+        }
+
+        // 2. Fetch Weather Data
+        const todayStr = new Date().toISOString().split("T")[0];
+        const isHistory = dateVal < todayStr;
+        const weatherType = isHistory ? "history" : "forecast";
+
+        const dailyVariables = [
+            "weather_code",
+            "temperature_2m_max",
+            "temperature_2m_min",
+            "apparent_temperature_max",
+            "apparent_temperature_min",
+            "precipitation_sum",
+            "rain_sum",
+            "snowfall_sum",
+            "wind_speed_10m_max",
+            "sunrise",
+            "sunset"
+        ].join(",");
+
+        let weatherUrl = "";
+        if (isHistory) {
+            weatherUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${location.latitude}&longitude=${location.longitude}&start_date=${dateVal}&end_date=${dateVal}&daily=${dailyVariables}&timezone=auto`;
+        } else {
+            weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m&daily=${dailyVariables}&start_date=${dateVal}&end_date=${dateVal}&timezone=auto`;
+        }
+
+        const weatherRes = await fetch(weatherUrl);
+        if (!weatherRes.ok) throw new Error(`Weather API server responded with status: ${weatherRes.status}`);
+        
+        const weatherData = await weatherRes.json();
+        
+        if (!weatherData.daily || !weatherData.daily.time || weatherData.daily.time.length === 0) {
+            throw new Error("Weather data is not available for this date.");
+        }
+
+        // Cache successful response
+        setSessionCache(cacheKey, { location, weatherData, weatherType });
+
+        renderWeather(location, weatherData, weatherType, false);
+
+    } catch (err) {
+        spinner.style.display = "none";
+        errorAlert.textContent = err.message;
+        errorAlert.style.display = "block";
+    }
+}
+
+function renderWeather(location, weatherData, weatherType, cacheUsed) {
+    document.getElementById("loading-spinner").style.display = "none";
+
+    // Set location and meta
+    document.getElementById("weather-source-title").textContent = weatherType === "history" ? "previous weather" : "forecast";
+    document.getElementById("location-name").textContent = location.name + (location.country ? `, ${location.country}` : "");
+    document.getElementById("date-text").textContent = weatherData.daily.time[0] + (cacheUsed ? " · loaded from cache" : "");
+
+    // Daily Simplification Map
+    const daily = weatherData.daily;
+    const code = daily.weather_code ? daily.weather_code[0] : null;
+
+    document.getElementById("main-temp").textContent = daily.temperature_2m_max ? daily.temperature_2m_max[0] : "--";
+    document.getElementById("weather-description").textContent = WEATHER_CODES[code] || "Unknown weather";
+    
+    const tempMin = daily.temperature_2m_min ? daily.temperature_2m_min[0] : "--";
+    const feelsMax = daily.apparent_temperature_max ? daily.apparent_temperature_max[0] : "--";
+    const feelsMin = daily.apparent_temperature_min ? daily.apparent_temperature_min[0] : "--";
+    document.getElementById("temp-range-text").textContent = `low ${tempMin}°C · feels like ${feelsMax}°C / ${feelsMin}°C`;
+
+    // Individual Boxes
+    document.getElementById("weather-precipitation").textContent = `${daily.precipitation_sum ? daily.precipitation_sum[0] : "0.0"} mm`;
+    document.getElementById("weather-wind").textContent = `${daily.wind_speed_10m_max ? daily.wind_speed_10m_max[0] : "0.0"} km/h`;
+    document.getElementById("weather-rain").textContent = `${daily.rain_sum ? daily.rain_sum[0] : "0.0"} mm`;
+    document.getElementById("weather-snowfall").textContent = `${daily.snowfall_sum ? daily.snowfall_sum[0] : "0.0"} cm`;
+
+    // Sunrise/Sunset Formatting (extract HH:MM from ISO string)
+    const formatTime = (isoString) => {
+        if (!isoString) return "--:--";
+        try {
+            return isoString.split("T")[1] || isoString;
+        } catch (e) {
+            return isoString;
+        }
+    };
+    document.getElementById("weather-sunrise").textContent = formatTime(daily.sunrise ? daily.sunrise[0] : "");
+    document.getElementById("weather-sunset").textContent = formatTime(daily.sunset ? daily.sunset[0] : "");
+
+    // Current weather conditions line
+    const currentBox = document.getElementById("current-details-box");
+    if (weatherData.current) {
+        const cur = weatherData.current;
+        document.getElementById("current-details-line").textContent = `now: ${cur.temperature_2m}°C, humidity ${cur.relative_humidity_2m}%, wind ${cur.wind_speed_10m} km/h, clouds ${cur.cloud_cover}%`;
+        currentBox.style.display = "block";
+    } else {
+        currentBox.style.display = "none";
+    }
+
+    document.getElementById("weather-panel").style.display = "block";
+}
+
+// -------------------------------------------------------------
+// Storage-based cache helpers
+// -------------------------------------------------------------
+function getSessionCache(key) {
+    try {
+        const itemStr = sessionStorage.getItem(key);
+        if (!itemStr) return null;
+
+        const item = JSON.parse(itemStr);
+        const now = Date.now();
+
+        // Expire after 5 minutes (300,000ms)
+        if (now - item.timestamp > CACHE_SECONDS * 1000) {
+            sessionStorage.removeItem(key);
+            return null;
+        }
+        return item.data;
+    } catch (e) {
+        return null;
+    }
+}
+
+function setSessionCache(key, value) {
+    try {
+        const item = {
+            timestamp: Date.now(),
+            data: value
+        };
+        sessionStorage.setItem(key, JSON.stringify(item));
+    } catch (e) {
+        // Safe fail if storage is disabled/quota exceeded
+    }
+}
+
+// -------------------------------------------------------------
+// On DOM Load bootstrap
+// -------------------------------------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const city = urlParams.get("city") || "";
+    const lat = urlParams.get("lat") || "";
+    const lon = urlParams.get("lon") || "";
+    const dateVal = urlParams.get("date") || document.getElementById("date").value;
+
+    // Always fetch on load. Defaults to pre-filled Baku if URL params are empty.
+    fetchWeatherData(city, lat, lon, dateVal);
+});
 </script>
 
 </body>
