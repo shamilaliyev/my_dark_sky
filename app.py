@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request
 import requests
 import json
+import logging
+import os
 import time
 import hashlib
 from pathlib import Path
@@ -8,9 +10,25 @@ from datetime import date, datetime
 
 app = Flask(__name__)
 
-CACHE_FILE = Path("cache/weather_cache.json")
+# ------------------------------------------------------------------
+# Logging: visible in Render's log dashboard
+# ------------------------------------------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+# ------------------------------------------------------------------
+# Cache: use /tmp on Render (always writable); fall back to local dir
+# ------------------------------------------------------------------
+_tmp_cache = Path("/tmp/cache/weather_cache.json")
+_local_cache = Path("cache/weather_cache.json")
+CACHE_FILE = _tmp_cache if os.environ.get("RENDER") else _local_cache
+
 CACHE_SECONDS = 300
 DEFAULT_CITY = "Baku"
+REQUEST_TIMEOUT = 30  # seconds – generous for Render cold-starts
 
 WEATHER_CODES = {
     0: "Clear sky",
@@ -44,15 +62,19 @@ def load_cache():
     try:
         with CACHE_FILE.open("r", encoding="utf-8") as file:
             return json.load(file)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, OSError) as e:
+        logger.warning("Failed to load cache: %s", e)
         return {}
 
 
 def save_cache(cache_data):
-    CACHE_FILE.parent.mkdir(exist_ok=True)
-
-    with CACHE_FILE.open("w", encoding="utf-8") as file:
-        json.dump(cache_data, file, indent=2)
+    try:
+        CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with CACHE_FILE.open("w", encoding="utf-8") as file:
+            json.dump(cache_data, file, indent=2)
+    except OSError as e:
+        # Cache write failure must never crash the app – just log and continue
+        logger.warning("Failed to save cache (continuing without it): %s", e)
 
 
 def make_cache_key(url, params):
@@ -70,9 +92,11 @@ def cached_get(url, params):
         age = now - cached_item["timestamp"]
 
         if age < CACHE_SECONDS:
+            logger.info("Cache hit for %s", url)
             return cached_item["data"], True
 
-    response = requests.get(url, params=params, timeout=10)
+    logger.info("Fetching %s params=%s", url, params)
+    response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
     response.raise_for_status()
     data = response.json()
 
@@ -243,10 +267,12 @@ def index():
         if not weather:
             error = "Weather data was not available for this date."
 
-    except requests.RequestException:
+    except requests.RequestException as e:
+        logger.error("Weather API request failed: %s", e, exc_info=True)
         error = "Weather service is not available now. Please try again later."
-    except Exception as exception:
-        error = f"Something went wrong: {exception}"
+    except Exception as e:
+        logger.error("Unexpected error: %s", e, exc_info=True)
+        error = f"Something went wrong: {e}"
 
     return render_template(
         "index.html",
