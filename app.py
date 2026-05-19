@@ -96,7 +96,10 @@ def cached_get(url, params):
             return cached_item["data"], True
 
     logger.info("Fetching %s params=%s", url, params)
-    response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    response = requests.get(url, params=params, headers=headers, timeout=REQUEST_TIMEOUT)
     response.raise_for_status()
     data = response.json()
 
