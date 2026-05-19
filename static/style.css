@@ -1,0 +1,199 @@
+body {
+    min-height: 100vh;
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #102033;
+}
+
+.page-background {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.background-photo {
+    position: fixed;
+    inset: 0;
+    background-image: url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=80");
+    background-size: cover;
+    background-position: center;
+    filter: blur(8px);
+    transform: scale(1.05);
+    z-index: -3;
+}
+
+.background-shade {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(8, 20, 36, 0.82), rgba(14, 43, 69, 0.64));
+    z-index: -2;
+}
+
+.navbar {
+    background: rgba(3, 15, 27, 0.35);
+    backdrop-filter: blur(12px);
+}
+
+.navbar-brand {
+    font-weight: 800;
+    letter-spacing: 0.03em;
+}
+
+.navbar-text {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.top-section {
+    margin-top: 30px;
+    padding: 42px;
+    border-radius: 34px;
+    color: white;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 26px 70px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(16px);
+}
+
+.small-title {
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.small-title.dark {
+    color: #1d5f93;
+}
+
+h1 {
+    max-width: 720px;
+    font-size: clamp(2.6rem, 7vw, 5.2rem);
+    line-height: 0.95;
+    font-weight: 900;
+    letter-spacing: -0.07em;
+}
+
+.intro-text {
+    max-width: 620px;
+    margin-top: 22px;
+    font-size: 1.16rem;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.search-card {
+    padding: 26px;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.form-label {
+    font-weight: 700;
+}
+
+.form-control {
+    border: 0;
+    border-radius: 18px;
+    padding: 14px 16px;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 4px rgba(187, 222, 251, 0.45);
+}
+
+.btn {
+    border-radius: 18px;
+    padding: 13px 18px;
+    font-weight: 800;
+}
+
+.btn-main {
+    color: #102033;
+    background: #f6d365;
+    border: 0;
+}
+
+.btn-main:hover {
+    background: #f8c840;
+}
+
+.btn-location {
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.btn-location:hover {
+    color: #102033;
+    background: white;
+}
+
+.weather-panel {
+    padding: 38px;
+    border-radius: 34px;
+    background: rgba(255, 255, 255, 0.93);
+    box-shadow: 0 26px 70px rgba(0, 0, 0, 0.28);
+}
+
+.weather-panel h2 {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+}
+
+.date-text,
+.soft-text {
+    color: #667085;
+}
+
+.temp-row {
+    display: flex;
+    align-items: flex-start;
+    margin: 18px 0;
+}
+
+.main-temp {
+    font-size: clamp(4.5rem, 12vw, 8rem);
+    line-height: 0.85;
+    font-weight: 900;
+    letter-spacing: -0.1em;
+}
+
+.temp-unit {
+    margin-left: 10px;
+    font-size: 2.1rem;
+    font-weight: 900;
+}
+
+.weather-box {
+    min-height: 114px;
+    padding: 22px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #f7fbff, #edf7ff);
+    border: 1px solid #dbeafe;
+}
+
+.weather-box span {
+    display: block;
+    margin-bottom: 10px;
+    color: #667085;
+    font-size: 0.92rem;
+}
+
+.weather-box strong {
+    font-size: 1.45rem;
+}
+
+.today-line {
+    padding: 18px 22px;
+    border-radius: 22px;
+    color: white;
+    background: #102033;
+    font-weight: 700;
+}
+
+.alert {
+    border: 0;
+    border-radius: 18px;
+}

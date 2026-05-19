@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dark Sky</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="page-background">
+    <div class="background-photo"></div>
+    <div class="background-shade"></div>
+
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">My Dark Sky</a>
+            <span class="navbar-text">weather, simply shown</span>
+        </div>
+    </nav>
+
+    <main class="container py-5">
+        <section class="top-section">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-7">
+                    <p class="small-title">weather app</p>
+                    <h1>Know the sky before the day begins.</h1>
+                    <p class="intro-text">
+                        Search a city, use your current location, and check the weather for today,
+                        the future, or a previous date.
+                    </p>
+                </div>
+
+                <div class="col-lg-5">
+                    <form class="search-card" method="get" action="/">
+                        <label for="city" class="form-label">Location</label>
+                        <input type="text" id="city" name="city" class="form-control form-control-lg"
+                               placeholder="Baku, London, Paris..." value="{{ city }}">
+
+                        <label for="date" class="form-label mt-3">Date</label>
+                        <input type="date" id="date" name="date" class="form-control form-control-lg"
+                               value="{{ selected_date }}">
+
+                        <input type="hidden" id="lat" name="lat">
+                        <input type="hidden" id="lon" name="lon">
+
+                        <button class="btn btn-main w-100 mt-4" type="submit">Show Weather</button>
+
+                        <button class="btn btn-location w-100 mt-2" type="button" onclick="useCurrentLocation()">
+                            Use My Location
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        {% if error %}
+            <div class="alert alert-warning mt-4">{{ error }}</div>
+        {% endif %}
+
+        {% if location and weather %}
+            <section class="weather-panel mt-4">
+                <div class="row g-4">
+                    <div class="col-lg-5">
+                        <p class="small-title dark">
+                            {% if source == "history" %}
+                                previous weather
+                            {% else %}
+                                forecast
+                            {% endif %}
+                        </p>
+
+                        <h2>
+                            {{ location.name }}
+                            {% if location.country %}
+                                , {{ location.country }}
+                            {% endif %}
+                        </h2>
+
+                        <p class="date-text">
+                            {{ weather.date }}
+                            {% if cache_used %}
+                                · loaded from cache
+                            {% endif %}
+                        </p>
+
+                        <div class="temp-row">
+                            <span class="main-temp">{{ weather.temp_max }}</span>
+                            <span class="temp-unit">°C</span>
+                        </div>
+
+                        <h3>{{ weather.description }}</h3>
+                        <p class="soft-text">
+                            low {{ weather.temp_min }}°C · feels like {{ weather.feels_max }}°C / {{ weather.feels_min }}°C
+                        </p>
+                    </div>
+
+                    <div class="col-lg-7">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="weather-box">
+                                    <span>Precipitation</span>
+                                    <strong>{{ weather.precipitation }} mm</strong>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="weather-box">
+                                    <span>Wind</span>
+                                    <strong>{{ weather.wind }} km/h</strong>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="weather-box">
+                                    <span>Rain</span>
+                                    <strong>{{ weather.rain }} mm</strong>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="weather-box">
+                                    <span>Snowfall</span>
+                                    <strong>{{ weather.snowfall }} cm</strong>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="weather-box">
+                                    <span>Sunrise</span>
+                                    <strong>{{ weather.sunrise }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="weather-box">
+                                    <span>Sunset</span>
+                                    <strong>{{ weather.sunset }}</strong>
+                                </div>
+                            </div>
+
+                            {% if current %}
+                                <div class="col-12">
+                                    <div class="today-line">
+                                        now: {{ current.temperature_2m }}°C,
+                                        humidity {{ current.relative_humidity_2m }}%,
+                                        wind {{ current.wind_speed_10m }} km/h,
+                                        clouds {{ current.cloud_cover }}%
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        {% endif %}
+    </main>
+</div>
+
+<script>
+function useCurrentLocation() {
+    if (!navigator.geolocation) {
+        alert("Your browser does not support location access.");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            document.getElementById("lat").value = position.coords.latitude;
+            document.getElementById("lon").value = position.coords.longitude;
+            document.querySelector("form").submit();
+        },
+        function() {
+            alert("Location access was not allowed.");
+        }
+    );
+}
+</script>
+
+</body>
+</html>
