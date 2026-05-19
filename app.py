@@ -269,7 +269,8 @@ def index():
 
     except requests.RequestException as e:
         logger.error("Weather API request failed: %s", e, exc_info=True)
-        error = "Weather service is not available now. Please try again later."
+        # Expose the exact error details on the page so we can diagnose it immediately
+        error = f"Weather service is not available now. Error detail: {e}. Please try again later."
     except Exception as e:
         logger.error("Unexpected error: %s", e, exc_info=True)
         error = f"Something went wrong: {e}"
